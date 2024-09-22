@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 """
 Standalone script to extract entities from documents using Controlled Generation with Gemini 1.5.
-Supports reading documents from various sources including local, S3, GCS, and HTTP(S).
+Uses https://pypi.org/project/fsspec/ project to allow PDF reading documents from various sources,
+including local, S3, GCS, HTTP(S). E.g:
+
+python multimodal.py --input github://dzivkovi:gen-ai-livestream@main/document-processing/sample-documents/4.pdf
+python multimodal.py --input https://raw.githubusercontent.com/dzivkovi/gen-ai-livestream/main/document-processing/sample-documents/4.pdf
+python multimodal.py --output r.json --input file://sample-documents/4.pdf
+python multimodal.py --output r.json --input ./sample-documents/4.pdf
 """
 
 import os
