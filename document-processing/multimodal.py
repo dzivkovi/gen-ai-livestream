@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Standalone script to extract entities from documents using Controlled Generation with Gemini 1.5.
 Supports reading documents from various sources including local, S3, GCS, and HTTP(S).
@@ -8,8 +8,9 @@ import os
 import sys
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import argparse
+import requests
 import fsspec
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
@@ -55,9 +56,14 @@ def init_vertexai(project: str, location: str) -> None:
 
 
 def read_document(file_path: str) -> bytes:
-    """Read document from various sources using fsspec."""
-    with fsspec.open(file_path, "rb") as file:
-        return file.read()
+    """Read document from various sources using fsspec or requests."""
+    if file_path.startswith(('http://', 'https://')):
+        response = requests.get(file_path, timeout=60)
+        response.raise_for_status()
+        return response.content
+    else:
+        with fsspec.open(file_path, "rb") as file:
+            return file.read()
 
 
 def get_mime_type(file_path: str) -> str:
@@ -80,7 +86,7 @@ def generate_content(model: GenerativeModel, document: Part, generation_config: 
     return json.loads(responses.candidates[0].content.parts[0].text)
 
 
-def save_json(data: Dict[str, Any], output_file: str = None) -> None:
+def save_json(data: Dict[str, Any], output_file: Optional[str] = None) -> None:
     """Save JSON data to a file or print to stdout."""
     if output_file:
         with fsspec.open(output_file, "w") as f:

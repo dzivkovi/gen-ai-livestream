@@ -1,0 +1,6 @@
+google-cloud-aiplatform==1.64.0
+pillow==10.4.0
+python-dotenv==1.0.0
+types-requests
+requests
+fsspec
