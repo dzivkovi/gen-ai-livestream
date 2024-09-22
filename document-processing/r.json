@@ -1,0 +1,29 @@
+{
+    "invoice_number": "01234",
+    "items": [
+        {
+            "description": "Photography service",
+            "price": "500",
+            "quantity": "1",
+            "total": "500"
+        },
+        {
+            "description": "Videography service",
+            "price": "1000",
+            "quantity": "1",
+            "total": "1000"
+        },
+        {
+            "description": "Video editing",
+            "price": "250",
+            "quantity": "2",
+            "total": "500"
+        },
+        {
+            "description": "Transportation fee",
+            "price": "100",
+            "quantity": "1",
+            "total": "100"
+        }
+    ]
+}

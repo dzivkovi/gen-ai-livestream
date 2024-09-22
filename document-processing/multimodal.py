@@ -1,21 +1,24 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Standalone script to extract entities from documents using Controlled Generation with Gemini 1.5.
 Supports reading documents from various sources including local, S3, GCS, and HTTP(S).
 """
 
-import argparse
+import os
+import sys
 import json
 import logging
 from typing import Dict, Any
-
+import argparse
 import fsspec
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part, GenerationConfig
+from dotenv import load_dotenv
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+load_dotenv()
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(level=LOG_LEVEL)
 
 # Constants
 PROMPT = """
@@ -73,27 +76,30 @@ def generate_content(model: GenerativeModel, document: Part, generation_config: 
         [document, PROMPT],
         generation_config=generation_config,
     )
-    logger.info("Generation metadata: %s", responses.usage_metadata)
+    logging.info("Generation metadata: %s", responses.usage_metadata)
     return json.loads(responses.candidates[0].content.parts[0].text)
 
 
-def save_json(data: Dict[str, Any], output_file: str) -> None:
-    """Save JSON data to a file."""
-    with fsspec.open(output_file, "w") as f:
-        json.dump(data, f, indent=4)
-    logger.info("JSON output written to %s", output_file)
+def save_json(data: Dict[str, Any], output_file: str = None) -> None:
+    """Save JSON data to a file or print to stdout."""
+    if output_file:
+        with fsspec.open(output_file, "w") as f:
+            json.dump(data, f, indent=4)
+        logging.info("JSON output written to %s", output_file)
+    else:
+        json.dump(data, sys.stdout, indent=4)
 
 
 def main():
+    """
+    Extract entities from documents using Gemini 1.5 Controlled Generation.
+    """
     parser = argparse.ArgumentParser(description="Extract entities from documents using Gemini 1.5")
     parser.add_argument("--input", required=True, help="Input document path (local, S3, GCS, or HTTP(S))")
-    parser.add_argument("--output", default="result.json", help="Output JSON file path")
+    parser.add_argument("--output", help="Output JSON file path (default: stdout)")
     parser.add_argument("--project", default="dialogflow-dan", help="Google Cloud project ID")
     parser.add_argument("--location", default="us-central1", help="Google Cloud location")
     parser.add_argument("--model", default="gemini-1.5-flash", help="Gemini model name")
-    parser.add_argument("--max-tokens", type=int, default=8192, help="Maximum output tokens")
-    parser.add_argument("--temperature", type=float, default=0, help="Generation temperature")
-    parser.add_argument("--top-p", type=float, default=0.95, help="Top-p sampling parameter")
     args = parser.parse_args()
 
     try:
@@ -105,9 +111,9 @@ def main():
 
         model = GenerativeModel(args.model)
         generation_config = GenerationConfig(
-            max_output_tokens=args.max_tokens,
-            temperature=args.temperature,
-            top_p=args.top_p,
+            max_output_tokens=8192,
+            temperature=0,
+            top_p=0.95,
             response_mime_type="application/json",
             response_schema=RESPONSE_SCHEMA,
         )
@@ -116,8 +122,9 @@ def main():
         save_json(result, args.output)
 
     except Exception as e:
-        logger.exception("An error occurred during execution:")
+        logging.exception("An error occurred during execution: %s", e)
         raise
+
 
 if __name__ == "__main__":
     main()
