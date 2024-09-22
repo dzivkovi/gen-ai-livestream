@@ -1,4 +1,4 @@
-_RESPONSE_SCHEMA_STRUCT = {
+_c = {
     "type": "object",
     "properties": {
         "invoice_number": {"type": "string"},
